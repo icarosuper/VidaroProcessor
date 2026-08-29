@@ -208,35 +208,6 @@ docker-compose down
 - [📊 Observability](docs/OBSERVABILITY.md) - Metrics and monitoring
 - [🧪 Testing](docs/TESTING.md) - Testing guide
 
-## 🛣️ Roadmap
-
-### ✅ Implemented
-
-- [x] Processing pipeline with FFmpeg (7 steps)
-- [x] Structured logging (Zerolog)
-- [x] Prometheus metrics
-- [x] Health check endpoint
-- [x] Unit tests (63.7% coverage)
-- [x] Integration tests (testcontainers)
-
-### Known Bugs
-
-- Workers block on shutdown (BLPop without context)
-- Artifacts from steps 4–7 (thumbnails, HLS, audio) don't reach MinIO
-- `docker-compose.yml` with missing env vars in the worker service
-- MinIO password exposed in log at startup
-- Fatal if `.env` file does not exist
-
-### Next
-
-- [ ] Fix bugs listed above
-- [ ] Retry with exponential backoff
-- [ ] Dead Letter Queue
-- [ ] Circuit breaker
-- [ ] Grafana Dashboard
-
-See [full roadmap](./docs/roadmap.md).
-
 ## 🤝 Contributing
 
 1. Fork the project
