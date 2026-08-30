@@ -7,7 +7,7 @@ Uses a worker-based architecture with message queues.
 [![Go Version](https://img.shields.io/badge/Go-1.24-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](docs/TESTING.md)
 [![Coverage](https://img.shields.io/badge/coverage-63.7%25-yellow)](docs/TESTING.md)
-[![Status](https://img.shields.io/badge/status-bugs%20known-orange)](docs/documentation.md#known-issues)
+[![Status](https://img.shields.io/badge/status-functional-brightgreen)](docs/roadmap.md)
 
 ## ✨ Features
 
@@ -162,7 +162,7 @@ VidroProcessor/
 ├── minio/                  # MinIO client
 ├── queue/                  # Redis client
 ├── docs/                   # Documentation
-│   ├── documentation.md    # Project documentation
+│   ├── claude/             # Architecture, conventions, design decisions, features index
 │   └── roadmap.md          # Roadmap and improvements
 ├── main.go                 # Entry point
 ├── OBSERVABILITY.md        # Observability guide
@@ -203,7 +203,8 @@ docker-compose down
 
 ## 📖 Documentation
 
-- [📚 Full Documentation](./docs/documentation.md) - Project overview
+- [🏛️ Architecture](docs/claude/architecture.md) - Worker lifecycle, queue protocol, pipeline, storage layout
+- [🚀 Getting Started](docs/GETTING_STARTED.md) - Local setup walkthrough
 - [🗺️ Roadmap](./docs/roadmap.md) - Features and improvements
 - [📊 Observability](docs/OBSERVABILITY.md) - Metrics and monitoring
 - [🧪 Testing](docs/TESTING.md) - Testing guide
@@ -229,6 +230,5 @@ This project is provided as-is, without warranties.
 
 ---
 
-**Version**: 0.1.0
-**Status**: 🚀 Functional
-**Last Updated**: 2026-04-25
+**Status**: 🚀 Functional — no release tagged yet; see [roadmap.md](docs/roadmap.md) for what is next
+**Last Updated**: 2026-08-29

@@ -88,7 +88,9 @@ Reduce rollout risk for P-PERF1/2/3:
 - **Feature flags/env vars**: controlled rollout + fast rollback (`PARALLEL_NON_CRITICAL_STEPS`, `MAX_PARALLEL_POST_TRANSCODE_STEPS`, `HLS_SINGLE_COMMAND`, `HLS_SINGLE_COMMAND_FALLBACK`).
 
 ### P-OPT1: Optional non-critical pipeline steps
-Steps 4–7 (thumbnails, audio, preview, HLS) not required for every product surface. **VidroFront** today only uses **processed MP4** + **thumbnails**; HLS, preview, separate audio stored via webhook but not on main watch/list flows.
+Steps 4–7 (thumbnails, audio, preview, HLS) not required for every product surface. **VidroFront** today plays the **processed MP4** + **thumbnails** — `GetVideo` builds `videoUrl` from `ProcessedPath` and never exposes `hlsPath`.
+
+> ⚠️ **Do not read this as "HLS is dead code."** `VidroFront/src/features/videos/components/VideoPlayer.tsx` already detects `.m3u8` and plays it through `hls.js`; the player is wired, only the API field is missing. HLS is one `GetVideo` change away from being the main watch path — gate the step behind a flag, don't delete it.
 
 **Task:** Add config (env flags or similar) to **skip** any combo of non-critical steps → reduces FFmpeg time + MinIO writes. Critical path: validate → analyze → transcode → upload generated artifacts.
 
