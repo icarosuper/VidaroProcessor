@@ -36,7 +36,7 @@ services:
         mc alias set local http://minio:9000 minioadmin minioadmin &&
         mc mb --ignore-existing local/videos &&
         mc admin config set local notify_webhook:vidroapi \
-          endpoint=http://host.docker.internal:5144/webhooks/minio-upload-completed \
+          endpoint=http://host.docker.internal:5000/webhooks/minio-upload-completed \
           auth_token=change-me-minio-upload-token &&
         mc admin service restart local --json &&
         sleep 5 &&
