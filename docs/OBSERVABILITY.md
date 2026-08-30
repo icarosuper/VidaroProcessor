@@ -80,7 +80,7 @@ Pre-configured dashboard at `grafana/provisioning/dashboards/video-processor.jso
 - Total job duration p50/p90/p99
 - Video size distribution
 
-Access at `http://localhost:3000` (admin/admin) after `docker-compose up`.
+Access at `http://localhost:3000` (admin/admin) after `docker-compose up` in this repo. In the root stack Grafana is on `http://localhost:3001` — the front owns 3000.
 
 ---
 

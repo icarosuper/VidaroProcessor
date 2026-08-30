@@ -15,7 +15,8 @@ Async Go worker for VidroApi. Pull video IDs from Redis queue, download from Min
 
 ```bash
 cp .env-example .env
-docker-compose up -d redis minio
+docker-compose up -d redis minio          # this repo's compose (processor only)
+# or the whole Vidro stack, from the parent dir: cd .. && docker compose up -d --build
 go run main.go
 ```
 
