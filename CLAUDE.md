@@ -8,7 +8,7 @@ Async Go worker for VidroApi. Pull video IDs from Redis queue, download from Min
 - **Error wrapping**: `fmt.Errorf("context: %w", err)` — never `%v`.
 - **Required config**: required env vars use `notEmpty` (caarlos0/env); optional use `envDefault`. Mirror every new var in `.env-example`.
 - **Shared contract with VidroApi**: queue names, MinIO paths, webhook payload. Changes need coordinated tag + deploy both repos.
-- **Branching**: `feature/<topic>` off `master`, merge via PR. `master` always deployable; prod deploys from `vX.Y.Z` tags.
+- **Branching**: commit straight to `master` by default; `feature/<topic>` only for large multi-commit features, after asking the user (see "Onde commitar"). `master` always deployable; prod deploys from `vX.Y.Z` tags.
 - **Only create files when necessary.** No `*.md`/README unless asked.
 
 ## Running locally
@@ -48,3 +48,27 @@ Tests shelling to `ffmpeg`/`ffprobe` auto-skip when binaries missing — use `Ge
 - Change architecture/cross-cutting flow → update `architecture.md` (+ `design-decisions.md` if *why* changes).
 - Change coding rule → update `conventions.md`.
 - This file changes only when project structure changes.
+
+## Padrão de mensagem de commit
+
+Conventional Commits, **em português**, só o assunto — sem corpo, sem escopo, sem rodapé (nada de `Co-authored-by`).
+
+Formato: `<tipo>: <verbo no infinitivo> <complemento>` — minúsculo depois do tipo, sem ponto final, até ~72 chars.
+
+Tipos usados no repo (frequência real): `feat` > `chore` > `fix` > `refactor` > `docs` / `test`.
+
+- `feat` — funcionalidade nova ou ampliada
+- `fix` — correção de bug/comportamento
+- `chore` — docs, README, migrations, scaffold, reorganização sem lógica
+- `refactor` — renomear/reestruturar sem mudar comportamento
+- `docs` / `test` — quando a mudança é só documentação ou só teste
+
+Exemplos do histórico: `feat: adicionar upload de avatar do canal`, `fix: corrigir botão de reações`, `chore: atualizar README`, `refactor: renomear projeto`.
+
+Título de PR (squash merge): `Feature/nome-da-branch (#N)`.
+
+### Onde commitar
+
+- **Padrão: direto na `master`.** Coisa pequena e bugfix não abre branch.
+- **Exceção: feature grande** (vários commits). Aí **pergunte ao usuário** se é para criar `feature/<topic>` ou mandar direto para `master` — nunca decida sozinho.
+- `master` sempre deployável; produção sai de tags `vX.Y.Z`.
