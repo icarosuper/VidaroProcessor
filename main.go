@@ -29,6 +29,15 @@ import (
 	"video-processor/queue"
 )
 
+// jobTimeout returns the whole-job budget: JOB_TIMEOUT when set, otherwise derived
+// from the step timeouts so the budget can never be smaller than the pipeline.
+func jobTimeout(cfg *config.Config) time.Duration {
+	if cfg.JobTimeout > 0 {
+		return cfg.JobTimeout
+	}
+	return processor.JobBudget(cfg.ProcessingTimeoutScale)
+}
+
 func main() {
 	// Configure zerolog
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -57,12 +66,14 @@ func main() {
 		numWorkers = runtime.NumCPU()
 	}
 
-	log.Info().Int("workers", numWorkers).Msg("Starting video-processor")
+	log.Info().Int("workers", numWorkers).Dur("jobTimeout", jobTimeout(cfg)).Msg("Starting video-processor")
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Goroutine that re-queues orphan jobs (crash during processing)
-	go queue.StartRecovery(ctx, 10*time.Minute)
+	// Goroutine that re-queues orphan jobs (crash during processing). The threshold
+	// must stay above the job budget, otherwise a healthy long job gets requeued
+	// while it is still running.
+	go queue.StartRecovery(ctx, jobTimeout(cfg)+time.Minute)
 
 	// Goroutine that updates the queue size metric every 30 seconds
 	go func() {
@@ -193,7 +204,7 @@ func processNextMessage(ctx context.Context, workerID int, cfg *config.Config, v
 	)
 	defer span.End()
 
-	processCtx, cancel := context.WithTimeout(jobCtx, 5*time.Minute)
+	processCtx, cancel := context.WithTimeout(jobCtx, jobTimeout(cfg))
 	defer cancel()
 
 	done := make(chan error, 1)
@@ -261,6 +272,7 @@ func processNextMessage(ctx context.Context, workerID int, cfg *config.Config, v
 			HLSSingleCommandFallback:      cfg.HLSSingleCommandFallback,
 			VideoEncoder:                  videoEncoder,
 			NVENCPreset:                   cfg.NVENCPreset,
+			TimeoutScale:                  cfg.ProcessingTimeoutScale,
 		})
 		if result != nil {
 			defer os.RemoveAll(result.TempDir)

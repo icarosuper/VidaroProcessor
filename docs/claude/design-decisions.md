@@ -7,7 +7,7 @@ Non-obvious choices shaping worker. Read before proposing arch changes — each 
 `queue/client.go` — `ConsumeMessage` uses `BRPOPLPUSH` to atomically move job from main queue into `:processing` sibling list.
 
 - **Why**: need at-least-once delivery + crash recovery without message broker. `BRPOP` alone loses jobs if worker dies mid-processing; Redis Streams would work but add consumer-group state API must also understand.
-- **Implication**: worker must `LREM` job from `:processing` when done (`AcknowledgeMessage`), whether succeeded, failed, or moved to DLQ. Background recovery loop re-queues anything stuck in `:processing` beyond 10 min.
+- **Implication**: worker must `LREM` job from `:processing` when done (`AcknowledgeMessage`), whether succeeded, failed, or moved to DLQ. Background recovery loop re-queues anything stuck in `:processing` beyond the job budget + 1 min.
 - **Trade-off**: job stuck exactly at orphan window but still running can be picked up twice. Acceptable — processing idempotent per `videoID` (uploads overwrite).
 
 ## Retry in place, then dead-letter
@@ -26,12 +26,14 @@ Non-obvious choices shaping worker. Read before proposing arch changes — each 
 - **Consequence**: success webhook may contain empty `thumbnailPaths`, `hlsPath`, `previewPath`, or `audioPath`. API must not treat missing optional artifacts as failure.
 - **Only `validate` and `transcode` are critical.** Changing classification is product-level decision — discuss with VidroApi before touching.
 
-## Whole-job timeout of 5 minutes + per-step timeouts
+## Whole-job timeout derived from the step timeouts
 
-`main.go` (5-minute `processCtx`) plus per-step timeouts in `internal/processor/processor.go`.
+`main.go` (`jobTimeout`) plus per-step timeouts in `internal/processor/processor.go`.
 
 - **Why**: defence in depth. Per-step timeout prevents one FFmpeg hang from monopolising worker. Whole-job timeout catches everything else (download stalls, upload stalls, recoverable bugs that never raise error).
-- **Tuning**: step timeouts assume short/medium content. For longer videos, raise transcode + streaming budgets first; whole-job budget must always exceed sum of critical-path steps (validate + analyze + transcode) plus download + upload slack.
+- **Derived, not hardcoded**: `processor.JobBudget(scale)` = sum of all seven step timeouts + 5 min transfer slack (18 min at scale 1). It was a hardcoded 5 min against 13 min of steps, so any large video died mid-pipeline and went to the DLQ. Deriving it makes the invariant unbreakable — `internal/processor/timeout_test.go` asserts it.
+- **Steps 4–7 run in parallel**, so the budget is a deliberate upper bound. Per-step timeouts are the real limits; this is only the backstop.
+- **Tuning**: `PROCESSING_TIMEOUT_SCALE` multiplies every step timeout and the budget — the knob for slow hosts or long content. `JOB_TIMEOUT` overrides the budget outright (rarely needed). Orphan recovery threshold is derived as `jobTimeout + 1min`, so it can never requeue a job that is still running.
 
 ## HLS single-command with sequential fallback
 
@@ -93,4 +95,4 @@ Non-obvious choices shaping worker. Read before proposing arch changes — each 
 `main.go`.
 
 - **Why**: on `SIGTERM` want workers to finish current job if possible to avoid leaking in-flight work to DLQ. But stuck job must not block Kubernetes pod from terminating — force-exit after 30s.
-- **Tuning**: ceiling should match or undercut orchestrator's termination grace period. If you raise `processCtx`'s whole-job budget beyond 5 min, revisit whether 30s is still enough to drain clean-shutdown case.
+- **Tuning**: ceiling should match or undercut orchestrator's termination grace period. If you raise the whole-job budget (`PROCESSING_TIMEOUT_SCALE`/`JOB_TIMEOUT`), revisit whether 30s is still enough to drain clean-shutdown case.

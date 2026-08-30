@@ -16,7 +16,7 @@ Map features/modules → files. Update when add module, pipeline step, or extern
 | Feature | File | Notes |
 |---|---|---|
 | Atomic queue consumption | `queue/client.go` (`ConsumeMessage`) | `BRPOPLPUSH` to a `:processing` sibling queue |
-| Orphan recovery | `queue/client.go` (`StartRecovery`, `recoverStuckJobs`) | Every 1 min; re-queues jobs stuck in processing > `stuckTimeout` (10 min from `main.go`) |
+| Orphan recovery | `queue/client.go` (`StartRecovery`, `recoverStuckJobs`) | Every 1 min; re-queues jobs stuck in processing > `stuckTimeout` (`jobTimeout(cfg)+1min` from `main.go`) |
 | Ack on completion | `queue/client.go` (`AcknowledgeMessage`) | Removes from `:processing` after success or DLQ |
 | Success fan-out | `queue/client.go` (`PublishSuccessMessage`) | LPush to `ProcessingFinishedQueue` |
 | Job state (pending → processing → done/failed) | `queue/job.go` | Stored under `job:<videoID>` in Redis, TTL 24h |

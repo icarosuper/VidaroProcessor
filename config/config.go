@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"time"
 
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
@@ -45,6 +46,13 @@ type Config struct {
 	VideoEncoder string `env:"VIDEO_ENCODER" envDefault:"auto"`
 	// NVENCPreset: FFmpeg NVENC preset p1–p7 (Turing+). p5 is a good default for 1080p quality.
 	NVENCPreset string `env:"NVENC_PRESET" envDefault:"p5"`
+	// ProcessingTimeoutScale multiplies every step timeout and the derived whole-job
+	// budget. Encoding time depends on the host CPU/GPU and on the input file, so this
+	// is the calibration knob: 2 doubles every timeout on a slow host.
+	ProcessingTimeoutScale float64 `env:"PROCESSING_TIMEOUT_SCALE" envDefault:"1"`
+	// JobTimeout overrides the whole-job budget. 0 derives it from the step timeouts
+	// (processor.JobBudget) — keep it 0 unless you know better.
+	JobTimeout time.Duration `env:"JOB_TIMEOUT" envDefault:"0"`
 }
 
 func LoadConfig() *Config {

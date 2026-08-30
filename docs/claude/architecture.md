@@ -25,7 +25,7 @@ Worker stateless; all durable state (queue, in-flight jobs, job metadata, artifa
 
 1. `main.go` loads config, probes video encoder (NVENC vs CPU), initializes OTel, MinIO, Redis, HTTP server (`/health`, `/metrics`).
 2. Spawns `WORKER_COUNT` goroutines (default `runtime.NumCPU()`). Each loops on `processNextMessage`.
-3. Background goroutine (`queue.StartRecovery`) scans `:processing` queue every minute, re-queues jobs in-flight >10 min (crash recovery).
+3. Background goroutine (`queue.StartRecovery`) scans `:processing` queue every minute, re-queues jobs in-flight beyond the job budget + 1 min (crash recovery).
 4. Another goroutine publishes `queue_size` into Prometheus every 30s.
 5. On `SIGINT`/`SIGTERM`, root context cancelled; workers finish current job or killed after 30s grace.
 
@@ -116,10 +116,10 @@ hls/<id>/<variant>/seg_NNN.ts
 ## Resilience layers
 
 - **Circuit breakers** (`internal/circuitbreaker`) wrap every Redis and MinIO call. MinIO trips on 5 consecutive failures (60s open); Redis on 3 (30s open). State changes logged.
-- **Orphan recovery** re-queues jobs stuck in `:processing` >10 min — covers worker crashes mid-job.
+- **Orphan recovery** re-queues jobs stuck in `:processing` beyond the job budget + 1 min — covers worker crashes mid-job.
 - **Retry + DLQ** — auto retry with state persistence, DLQ after exhaustion. DLQ jobs not auto-retried; investigate and requeue manually.
 - **Per-step timeouts** prevent single bad video holding worker forever.
-- **Whole-job timeout** 5 min final backstop (`processCtx`).
+- **Whole-job timeout** final backstop (`processCtx`), derived from the step timeouts by `processor.JobBudget` (18 min at scale 1) — never smaller than the pipeline. Tune with `PROCESSING_TIMEOUT_SCALE`.
 
 ## Observability
 
