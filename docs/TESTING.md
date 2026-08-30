@@ -170,30 +170,17 @@ FFmpeg is not available - skipping test
 - `queue.ConsumeMessage()` and `PublishSuccessMessage()`
 - `minio.DownloadVideo()` and `UploadVideo()`
 - `main.processNextMessage()` — worker orchestration
-- Untested steps: `audio.go`, `preview.go`, `streaming.go`
 - Transcoding + throughput benchmarks
 
 ---
 
 ## CI/CD
 
-```yaml
-# .github/workflows/test.yml
-name: Tests
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.25'
-      - run: sudo apt-get install -y ffmpeg
-      - run: go test -v ./... -cover -timeout 10m
-```
+`.github/workflows/ci.yml` runs on push to `master` and on every PR: `go build`, `go vet`
+and `go test ./... -cover -timeout 15m`, with ffmpeg installed so the pipeline-step tests
+don't skip themselves.
 
 ---
 
-**Last Updated**: 2026-03-26
+**Last Updated**: 2026-08-29
 **Current Coverage**: 63.7% (processor-steps), ~100% (metrics, circuitbreaker, webhook, telemetry)
